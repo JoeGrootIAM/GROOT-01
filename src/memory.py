@@ -1,0 +1,82 @@
+"""GROOT-01 human-readable persistent memory."""
+
+from pathlib import Path
+
+import yaml
+
+from .logger import log_action
+
+
+
+MEMORY_FILE = Path("memory/notes/core.yaml")
+
+
+
+def load_memory() -> dict:
+    """Load GROOT's persistent memory from YAML."""
+    if not MEMORY_FILE.exists():
+        return {}
+
+    with MEMORY_FILE.open("r", encoding="utf-8") as file:
+        data = yaml.safe_load(file)
+
+    return data if data else {}
+
+
+
+def propose_memory_update(section: str, value) -> dict:
+    """Prepare a memory change without writing it."""
+    return {
+        "section": section,
+        "value": value,
+    }
+
+
+
+def write_memory_update(section: str, value) -> None:
+    """Write an approved memory change to disk."""
+    memory = load_memory()
+    memory[section] = value
+
+    MEMORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    with MEMORY_FILE.open("w", encoding="utf-8") as file:
+        yaml.safe_dump(memory, file, sort_keys=False)
+
+
+
+def read_memory_section(section: str):
+    """Read one section of persistent memory."""
+    memory = load_memory()
+    return memory.get(section)
+
+
+
+def apply_approved_update(
+    proposal: dict,
+    approved: bool,
+    logger,
+) -> bool:
+    """Apply a memory proposal only after explicit approval."""
+    section = proposal["section"]
+    value = proposal["value"]
+
+    if not approved:
+        log_action(
+            logger,
+            "MEMORY_UPDATE",
+            "REFUSED",
+            f"section={section}",
+        )
+        return False
+
+    write_memory_update(section, value)
+
+    log_action(
+        logger,
+        "MEMORY_UPDATE",
+        "APPROVED",
+        f"section={section}",
+    )
+
+    return True

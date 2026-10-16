@@ -1,0 +1,29 @@
+"""GROOT-01 local language model interface."""
+
+
+
+class LocalLLM:
+    """Interface for GROOT's local language model."""
+
+    def __init__(self, model_path: str, context_size: int, threads: int):
+        self.model_path = model_path
+        self.context_size = context_size
+        self.threads = threads
+        self.model = None
+
+    def load(self):
+        """Load the local model."""
+        print(f"Model path: {self.model_path}")
+        print(f"Context size: {self.context_size}")
+        print(f"Threads: {self.threads}")
+
+    def generate(self, prompt: str) -> str:
+        """Generate a response from the model."""
+        if self.model is None:
+            raise RuntimeError("Model is not loaded.")
+
+        return self.model(prompt)
+
+    def unload(self):
+        """Unload the local model."""
+        self.model = None

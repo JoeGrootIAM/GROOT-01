@@ -1,0 +1,66 @@
+"""GROOT-01 Phase 1 entry point."""
+
+from .config import load_config
+from .llm import LocalLLM
+from .logger import setup_logging
+from .policy import check_ram_policy
+
+
+
+def main():
+    """Start GROOT."""
+    config = load_config()
+
+    assistant = config["assistant"]
+    model_config = config["model"]
+    resource_policy = config["resource_policy"]
+    paths = config["paths"]
+
+    logger = setup_logging(
+        f"{paths['logs']}/groot.log"
+    )
+
+    logger.info(
+        "STARTUP | OK | %s v%s",
+        assistant["name"],
+        assistant["version"],
+    )
+
+    print()
+    print("================================")
+    print(f"          {assistant['name']}-01")
+    print("   Personal AI Assistant")
+    print("================================")
+    print()
+
+    ram_allowed = check_ram_policy(
+        logger,
+        resource_policy["min_free_ram_mb"],
+    )
+
+    if not ram_allowed:
+        print("GROOT cannot safely start.")
+        print("Resource policy refused startup.")
+        return
+
+    llm = LocalLLM(
+        model_path=model_config["path"],
+        context_size=model_config["context_size"],
+        threads=model_config["threads"],
+    )
+
+    print(f"Workspace: {paths['workspace']}")
+    print("RAM policy: SAFE")
+    print()
+    print("Model configuration:")
+    print(f"  Path: {llm.model_path}")
+    print(f"  Context: {llm.context_size}")
+    print(f"  Threads: {llm.threads}")
+    print()
+    print("GROOT is ready.")
+    print()
+
+
+
+if __name__ == "__main__":
+    main()

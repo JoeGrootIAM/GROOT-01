@@ -1,0 +1,55 @@
+"""GROOT-01 local language model interface."""
+
+from llama_cpp import Llama
+
+
+
+class LocalLLM:
+    """Interface for GROOT's local language modol."""
+
+    def __init__(
+        self,
+        model_path: str,
+        context_size: int,
+        threads: int,
+        temperature: float = 0.7,
+        max_tokens: int = 256,
+    ):
+        self.model_path = model_path
+        self.context_size = context_size
+        self.threads = threads
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.model = None
+
+    def load(self):
+        """Load the local GGUF model."""
+        self.model = Llama(
+            model_path=self.model_path,
+            n_ctx=self.context_size,
+            n_threads=self.threads,
+            verbose=False,
+        )
+
+    def generate(self, prompt: str) -> str:
+        """Generate a response from the local model."""
+        if self.model is None:
+            raise RuntimeError("Model is not loaded.")
+
+        response = self.model.create_chat_completion(
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+        )
+
+        return response["choices"][0]["message"]["content"].strip()
+
+    def unload(self):
+        """Unload the local model."""
+        self.model = None
+
